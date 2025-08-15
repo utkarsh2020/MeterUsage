@@ -33,33 +33,40 @@ A gRPC-based microservice system for serving time-based electricity consumption 
    cd electricity-consumption-microservice
    ```
 
-2. **Install Python dependencies:**
+2. **Create and activate a virtual environment (recommended):**
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+   Note: `.venv` is git-ignored and can be safely deleted and regenerated anytime.
+
+3. **Install Python dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Generate gRPC code:**
+4. **Generate gRPC code:**
    ```bash
    cd grpc_server
    python -m grpc_tools.protoc --python_out=. --grpc_python_out=. -I. proto/consumption.proto
    cd ..
    ```
 
-4. **Start the gRPC server:**
+5. **Start the gRPC server:**
    ```bash
    cd grpc_server
    python server.py
    ```
    The gRPC server will start on port `50051`.
 
-5. **Start the HTTP server** (in a new terminal):
+6. **Start the HTTP server** (in a new terminal):
    ```bash
    cd http_server
    python app.py
    ```
    The HTTP server will start on port `8000`.
 
-6. **Access the web interface:**
+7. **Access the web interface:**
    Open your browser and navigate to: `http://localhost:8000/static/index.html`
 
 ### Docker Deployment
