@@ -19,8 +19,11 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ValidationError
 
 # Import generated protobuf classes
-import consumption_pb2
-import consumption_pb2_grpc
+import os
+import sys
+# Make '../grpc_server' importable so 'proto' package can be resolved regardless of CWD
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "grpc_server"))
+from proto import consumption_pb2, consumption_pb2_grpc
 
 # Configure logging
 logging.basicConfig(

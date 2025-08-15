@@ -10,15 +10,14 @@ import csv
 import logging
 import os
 from concurrent import futures
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 import grpc
 from google.protobuf import timestamp_pb2
 
 # Import generated protobuf classes
-import consumption_pb2
-import consumption_pb2_grpc
+from proto import consumption_pb2, consumption_pb2_grpc
 
 # Configure logging
 logging.basicConfig(
@@ -36,7 +35,12 @@ class ConsumptionRecord:
         self.energy_usage = energy_usage
         # Parse datetime for filtering
         try:
-            self.datetime_obj = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
+            parsed = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
+            # Normalize to timezone-aware UTC
+            if parsed.tzinfo is None:
+                self.datetime_obj = parsed.replace(tzinfo=timezone.utc)
+            else:
+                self.datetime_obj = parsed.astimezone(timezone.utc)
         except ValueError:
             logger.warning(f"Invalid datetime format: {datetime_str}")
             self.datetime_obj = None
@@ -59,13 +63,27 @@ class ConsumptionServicer(consumption_pb2_grpc.ConsumptionServiceServicer):
                 
                 for row in reader:
                     try:
+                        # Support multiple CSV schemas:
+                        # 1) Preferred: DateTime, EnergyUsage
+                        # 2) Alternate: time, meterusage
+                        keymap = {k.lower(): k for k in row.keys()}
+
+                        if 'datetime' in keymap and 'energyusage' in keymap:
+                            dt_val = row[keymap['datetime']]
+                            eu_val = row[keymap['energyusage']]
+                        elif 'time' in keymap and 'meterusage' in keymap:
+                            dt_val = row[keymap['time']]
+                            eu_val = row[keymap['meterusage']]
+                        else:
+                            raise KeyError("CSV missing required columns. Expected (DateTime,EnergyUsage) or (time,meterusage)")
+
                         record = ConsumptionRecord(
-                            datetime_str=row['DateTime'],
-                            energy_usage=float(row['EnergyUsage'])
+                            datetime_str=dt_val,
+                            energy_usage=float(eu_val)
                         )
                         self.records.append(record)
                     except (ValueError, KeyError) as e:
-                        logger.warning(f"Skipping invalid row: {row}, error: {e}")
+                        logger.warning(f"Skipping invalid row due to error: {e}")
                         
             logger.info(f"Loaded {len(self.records)} consumption records")
             
@@ -82,8 +100,11 @@ class ConsumptionServicer(consumption_pb2_grpc.ConsumptionServiceServicer):
             return None
             
         try:
-            # Handle both with and without timezone info
-            return datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
+            # Handle both with and without timezone info; normalize to aware UTC
+            parsed = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
+            if parsed.tzinfo is None:
+                return parsed.replace(tzinfo=timezone.utc)
+            return parsed.astimezone(timezone.utc)
         except ValueError:
             logger.warning(f"Invalid datetime format: {datetime_str}")
             return None
