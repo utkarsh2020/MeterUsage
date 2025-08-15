@@ -29,7 +29,7 @@ A gRPC-based microservice system for serving time-based electricity consumption 
 
 1. **Clone and setup the project:**
    ```bash
-   git clone <repository>
+   git clone [<repository>](https://github.com/utkarsh2020/MeterUsage.git)
    cd electricity-consumption-microservice
    ```
 
