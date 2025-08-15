@@ -457,7 +457,6 @@
                         <tr>
                             <th>📅 Date & Time</th>
                             <th>⚡ Energy Usage (kWh)</th>
-                            <th>🌡️ Temperature (°C)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -465,7 +464,6 @@
                             <tr>
                                 <td class="datetime-col">${formatDateTime(record.datetime)}</td>
                                 <td class="energy-col">${record.energy_usage.toFixed(1)}</td>
-                                <td class="temp-col">${record.temperature.toFixed(1)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -477,13 +475,11 @@
             // Calculate statistics
             const totalEnergy = data.reduce((sum, record) => sum + record.energy_usage, 0);
             const avgEnergy = totalEnergy / data.length;
-            const avgTemp = data.reduce((sum, record) => sum + record.temperature, 0) / data.length;
 
             updateStats(`
                 Showing ${data.length} records | 
                 Total Energy: ${totalEnergy.toFixed(1)} kWh | 
-                Avg Energy: ${avgEnergy.toFixed(1)} kWh | 
-                Avg Temperature: ${avgTemp.toFixed(1)}°C
+                Avg Energy: ${avgEnergy.toFixed(1)} kWh
             `);
         }
 

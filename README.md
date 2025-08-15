@@ -107,8 +107,7 @@ curl "http://localhost:8000/api/consumption?start_datetime=2024-01-01T06:00:00"
   "records": [
     {
       "datetime": "2024-01-01T00:00:00",
-      "energy_usage": 12.5,
-      "temperature": 22.3
+      "energy_usage": 12.5
     }
   ],
   "total_count": 1
@@ -140,7 +139,6 @@ message ConsumptionResponse {
 message ConsumptionRecord {
   string datetime = 1;
   double energy_usage = 2;
-  double temperature = 3;
 }
 ```
 
@@ -166,7 +164,6 @@ response = stub.GetConsumptionData(request)
 for record in response.records:
     print(f"DateTime: {record.datetime}")
     print(f"Energy Usage: {record.energy_usage} kWh")
-    print(f"Temperature: {record.temperature}°C")
 ```
 
 ## 📊 Data Format
@@ -177,14 +174,13 @@ The system expects CSV data with the following columns:
 |-------------|---------|--------------------------------------|
 | DateTime    | string  | ISO 8601 formatted datetime string  |
 | EnergyUsage | float   | Energy consumption in kWh            |
-| Temperature | float   | Temperature reading in Celsius       |
 
 **Example CSV:**
 ```csv
-DateTime,EnergyUsage,Temperature
-2024-01-01T00:00:00,12.5,22.3
-2024-01-01T01:00:00,11.2,21.8
-2024-01-01T02:00:00,10.8,21.2
+DateTime,EnergyUsage
+2024-01-01T00:00:00,12.5
+2024-01-01T01:00:00,11.2
+2024-01-01T02:00:00,10.8
 ```
 
 ## 🌐 Web Interface Features
@@ -193,7 +189,7 @@ The HTML5 frontend provides:
 
 - **📊 Interactive Data Table**: View consumption records in a sortable, responsive table
 - **🔍 Date Range Filtering**: Filter data by start and end datetime
-- **📈 Real-time Statistics**: Total energy consumption, averages, and record counts
+- **📈 Real-time Statistics**: Total energy consumption, average usage, and record counts
 - **📱 Responsive Design**: Works on desktop, tablet, and mobile devices
 - **⚡ Fast Loading**: Efficient data fetching and rendering
 - **🎨 Modern UI**: Clean, professional design with hover effects and animations

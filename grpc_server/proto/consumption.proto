@@ -15,7 +15,6 @@ message ConsumptionRequest {
 message ConsumptionRecord {
   string datetime = 1;
   double energy_usage = 2;
-  double temperature = 3;
 }
 
 message ConsumptionResponse {

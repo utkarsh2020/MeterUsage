@@ -34,7 +34,6 @@ class ConsumptionRecord(BaseModel):
     """Pydantic model for consumption record."""
     datetime: str
     energy_usage: float
-    temperature: float
 
 
 class ConsumptionResponse(BaseModel):
@@ -100,8 +99,7 @@ class GRPCClient:
             for record in response.records:
                 records.append(ConsumptionRecord(
                     datetime=record.datetime,
-                    energy_usage=record.energy_usage,
-                    temperature=record.temperature
+                    energy_usage=record.energy_usage
                 ))
             
             return records

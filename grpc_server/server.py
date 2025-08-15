@@ -31,10 +31,9 @@ logger = logging.getLogger(__name__)
 class ConsumptionRecord:
     """Data structure for consumption records."""
     
-    def __init__(self, datetime_str: str, energy_usage: float, temperature: float):
+    def __init__(self, datetime_str: str, energy_usage: float):
         self.datetime_str = datetime_str
         self.energy_usage = energy_usage
-        self.temperature = temperature
         # Parse datetime for filtering
         try:
             self.datetime_obj = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
@@ -62,8 +61,7 @@ class ConsumptionServicer(consumption_pb2_grpc.ConsumptionServiceServicer):
                     try:
                         record = ConsumptionRecord(
                             datetime_str=row['DateTime'],
-                            energy_usage=float(row['EnergyUsage']),
-                            temperature=float(row['Temperature'])
+                            energy_usage=float(row['EnergyUsage'])
                         )
                         self.records.append(record)
                     except (ValueError, KeyError) as e:
@@ -136,8 +134,7 @@ class ConsumptionServicer(consumption_pb2_grpc.ConsumptionServiceServicer):
             for record in filtered_records:
                 grpc_record = consumption_pb2.ConsumptionRecord(
                     datetime=record.datetime_str,
-                    energy_usage=record.energy_usage,
-                    temperature=record.temperature
+                    energy_usage=record.energy_usage
                 )
                 response.records.append(grpc_record)
             
