@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electricity Consumption Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #1a202c;
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1.1rem;
+        }
+
+        .filters {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            border: 1px solid #e2e8f0;
+        }
+
+        .filters h2 {
+            color: #2d3748;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 20px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+            flex: 1;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+
+        .filter-group input {
+            padding: 10px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .filter-group input:focus {
+            outline: none;
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: #3182ce;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2c5282;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background-color: #cbd5e0;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .data-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            border: 1px solid #e2e8f0;
+        }
+
+        .data-header {
+            padding: 24px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+
+        .data-header h2 {
+            color: #1a202c;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .data-stats {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #f7fafc;
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.95rem;
+        }
+
+        tr:hover {
+            background-color: #f7fafc;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fafbfc;
+        }
+
+        tr:nth-child(even):hover {
+            background-color: #f1f5f9;
+        }
+
+        .datetime-col {
+            color: #3182ce;
+            font-weight: 500;
+        }
+
+        .energy-col {
+            color: #38a169;
+            font-weight: 600;
+        }
+
+        .temp-col {
+            color: #d69e2e;
+            font-weight: 500;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            border: 3px solid #e2e8f0;
+            border-radius: 50%;
+            border-top-color: #3182ce;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 16px;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px 20px;
+            color: #e53e3e;
+            background-color: #fed7d7;
+            border-radius: 8px;
+            margin: 20px;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .filter-row {
+                flex-direction: column;
+            }
+
+            .filter-group {
+                min-width: auto;
+            }
+
+            .filter-buttons {
+                width: 100%;
+                justify-content: stretch;
+            }
+
+            .btn {
+                flex: 1;
+                justify-content: center;
+            }
+
+            th, td {
+                padding: 12px 8px;
+                font-size: 0.85rem;
+            }
+
+            .data-header {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ Electricity Consumption Dashboard</h1>
+            <p>Monitor and analyze your electricity usage patterns over time</p>
+        </div>
+
+        <div class="filters">
+            <h2>🔍 Filter Data</h2>
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="startDate">Start Date & Time</label>
+                    <input type="datetime-local" id="startDate" name="startDate">
+                </div>
+                <div class="filter-group">
+                    <label for="endDate">End Date & Time</label>
+                    <input type="datetime-local" id="endDate" name="endDate">
+                </div>
+                <div class="filter-buttons">
+                    <button class="btn btn-primary" onclick="loadData()">
+                        📊 Load Data
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearFilters()">
+                        🔄 Clear Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-container">
+            <div class="data-header">
+                <h2>📈 Consumption Data</h2>
+                <div class="data-stats" id="dataStats">
+                    Click "Load Data" to view electricity consumption records
+                </div>
+            </div>
+            <div class="table-container">
+                <div id="dataContent">
+                    <div class="empty">
+                        <div class="empty-icon">📊</div>
+                        <h3>No data loaded</h3>
+                        <p>Use the filters above to load and view consumption data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentData = [];
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Electricity Consumption Dashboard loaded');
+            
+            // Set default date range (last 24 hours)
+            const now = new Date();
+            const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            
+            document.getElementById('startDate').value = formatDateTimeLocal(yesterday);
+            document.getElementById('endDate').value = formatDateTimeLocal(now);
+            
+            // Load initial data
+            loadData();
+        });
+
+        // Format date for datetime-local input
+        function formatDateTimeLocal(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        // Convert datetime-local to ISO string
+        function toISOString(datetimeLocal) {
+            if (!datetimeLocal) return null;
+            const date = new Date(datetimeLocal);
+            return date.toISOString();
+        }
+
+        // Format datetime for display
+        function formatDateTime(datetimeStr) {
+            try {
+                const date = new Date(datetimeStr);
+                return date.toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            } catch (error) {
+                return datetimeStr;
+            }
+        }
+
+        // Show loading state
+        function showLoading() {
+            const dataContent = document.getElementById('dataContent');
+            dataContent.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <h3>Loading consumption data...</h3>
+                    <p>Please wait while we fetch your electricity usage information</p>
+                </div>
+            `;
+            
+            // Disable load button
+            const loadBtn = document.querySelector('.btn-primary');
+            loadBtn.disabled = true;
+            loadBtn.textContent = '⏳ Loading...';
+        }
+
+        // Show error state
+        function showError(message) {
+            const dataContent = document.getElementById('dataContent');
+            dataContent.innerHTML = `
+                <div class="error">
+                    <h3>❌ Error Loading Data</h3>
+                    <p>${message}</p>
+                    <p>Please check your connection and try again.</p>
+                </div>
+            `;
+            
+            updateStats('Error occurred while loading data');
+        }
+
+        // Update data statistics
+        function updateStats(message) {
+            document.getElementById('dataStats').textContent = message;
+        }
+
+        // Render data table
+        function renderTable(data) {
+            if (!data || data.length === 0) {
+                document.getElementById('dataContent').innerHTML = `
+                    <div class="empty">
+                        <div class="empty-icon">📊</div>
+                        <h3>No data found</h3>
+                        <p>Try adjusting your date filters or check if data exists for the selected period</p>
+                    </div>
+                `;
+                updateStats('No records found for the selected period');
+                return;
+            }
+
+            const tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>📅 Date & Time</th>
+                            <th>⚡ Energy Usage (kWh)</th>
+                            <th>🌡️ Temperature (°C)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(record => `
+                            <tr>
+                                <td class="datetime-col">${formatDateTime(record.datetime)}</td>
+                                <td class="energy-col">${record.energy_usage.toFixed(1)}</td>
+                                <td class="temp-col">${record.temperature.toFixed(1)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            document.getElementById('dataContent').innerHTML = tableHTML;
+
+            // Calculate statistics
+            const totalEnergy = data.reduce((sum, record) => sum + record.energy_usage, 0);
+            const avgEnergy = totalEnergy / data.length;
+            const avgTemp = data.reduce((sum, record) => sum + record.temperature, 0) / data.length;
+
+            updateStats(`
+                Showing ${data.length} records | 
+                Total Energy: ${totalEnergy.toFixed(1)} kWh | 
+                Avg Energy: ${avgEnergy.toFixed(1)} kWh | 
+                Avg Temperature: ${avgTemp.toFixed(1)}°C
+            `);
+        }
+
+        // Load data from API
+        async function loadData() {
+            try {
+                showLoading();
+
+                // Get filter values
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+
+                // Build API URL
+                let apiUrl = '/api/consumption';
+                const params = new URLSearchParams();
+
+                if (startDate) {
+                    params.append('start_datetime', toISOString(startDate));
+                }
+                if (endDate) {
+                    params.append('end_datetime', toISOString(endDate));
+                }
+
+                if (params.toString()) {
+                    apiUrl += '?' + params.toString();
+                }
+
+                console.log('Fetching data from:', apiUrl);
+
+                // Fetch data
+                const response = await fetch(apiUrl);
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('Received data:', data);
+
+                // Store and render data
+                currentData = data.records || [];
+                renderTable(currentData);
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showError(error.message || 'Failed to load consumption data');
+            } finally {
+                // Re-enable load button
+                const loadBtn = document.querySelector('.btn-primary');
+                loadBtn.disabled = false;
+                loadBtn.innerHTML = '📊 Load Data';
+            }
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            
+            // Show empty state
+            document.getElementById('dataContent').innerHTML = `
+                <div class="empty">
+                    <div class="empty-icon">📊</div>
+                    <h3>Filters cleared</h3>
+                    <p>Click "Load Data" to view all consumption records</p>
+                </div>
+            `;
+            
+            updateStats('Filters cleared - click "Load Data" to view all records');
+        }
+
+        // Handle Enter key in form inputs
+        document.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                loadData();
+            }
+        });
+    </script>
+</body>
+</html>
