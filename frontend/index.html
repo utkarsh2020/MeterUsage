@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Electricity Consumption Dashboard</title>
+    <!-- Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
     <style>
         * {
             margin: 0;
@@ -335,6 +338,10 @@
                     Click "Load Data" to view electricity consumption records
                 </div>
             </div>
+            <!-- Chart area -->
+            <div class="table-container" style="padding: 16px 16px 0 16px;">
+                <canvas id="usageChart" height="110"></canvas>
+            </div>
             <div class="table-container">
                 <div id="dataContent">
                     <div class="empty">
@@ -350,6 +357,7 @@
     <script>
         // Global variables
         let currentData = [];
+        let chartInstance = null; // holds Chart.js instance
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
@@ -437,6 +445,79 @@
             document.getElementById('dataStats').textContent = message;
         }
 
+        // Render line chart for energy usage over time
+        function renderChart(data) {
+            const canvas = document.getElementById('usageChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            const labels = (data || []).map(d => new Date(d.datetime));
+            const values = (data || []).map(d => d.energy_usage);
+
+            // Destroy previous chart instance
+            if (chartInstance && typeof chartInstance.destroy === 'function') {
+                chartInstance.destroy();
+            }
+            // Backward-compat: if an older global exists, try to destroy it
+            if (window.usageChart && typeof window.usageChart.destroy === 'function') {
+                try { window.usageChart.destroy(); } catch (_) {}
+            }
+
+            if (labels.length === 0) {
+                const cctx = canvas.getContext('2d');
+                cctx.clearRect(0, 0, canvas.width, canvas.height);
+                return;
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Energy Usage (kWh)',
+                        data: values,
+                        borderColor: '#3182ce',
+                        backgroundColor: 'rgba(49,130,206,0.15)',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.2,
+                        pointRadius: 0,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: { unit: 'hour' },
+                            ticks: { color: '#4a5568' },
+                            grid: { color: '#edf2f7' }
+                        },
+                        y: {
+                            title: { display: true, text: 'kWh' },
+                            ticks: { color: '#4a5568' },
+                            grid: { color: '#edf2f7' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: true },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                title: (items) => items && items[0] ? new Date(items[0].label).toLocaleString() : '',
+                                label: (item) => ` ${item.dataset.label}: ${Number(item.parsed.y).toFixed(2)} kWh`
+                            }
+                        }
+                    },
+                    interaction: { mode: 'index', intersect: false }
+                }
+            });
+            // Keep a global reference for any legacy calls
+            window.usageChart = chartInstance;
+        }
+
         // Render data table
         function renderTable(data) {
             if (!data || data.length === 0) {
@@ -522,6 +603,7 @@
 
                 // Store and render data
                 currentData = data.records || [];
+                renderChart(currentData);
                 renderTable(currentData);
 
             } catch (error) {

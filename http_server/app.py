@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import List, Optional
 
 import grpc
+import math
 import uvicorn
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -100,9 +101,12 @@ class GRPCClient:
             
             records = []
             for record in response.records:
+                # Filter out non-finite values to keep JSON compliant
+                if record is None or not math.isfinite(record.energy_usage):
+                    continue
                 records.append(ConsumptionRecord(
                     datetime=record.datetime,
-                    energy_usage=record.energy_usage
+                    energy_usage=float(record.energy_usage)
                 ))
             
             return records
